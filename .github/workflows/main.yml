@@ -1,4 +1,4 @@
-name: GHA-CICD 
+name: CI-CD Pipeline (Vite React SaaS)
 
 on:
   push:
@@ -62,7 +62,7 @@ jobs:
         with:
           context: .
           load: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/xora:xora-v${{ github.run_number }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/Xora:Xora-v${{ github.run_number }}
           # cache-from: type=local,src=/tmp/.buildx-cache
           # cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
           # cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/xora:buildcache
@@ -79,7 +79,7 @@ jobs:
       - name: Run Trivy image scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/xora:xora-v${{ github.run_number }}
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/Xora:Xora-v${{ github.run_number }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
 
@@ -95,24 +95,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set kubeconfig for k3s
-        run: |
-          mkdir -p ~/.kube
-          sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
-          sudo chown $USER:$USER ~/.kube/config
-          export KUBECONFIG=~/.kube/config
-          kubectl get nodes
+      # - name: Set kubeconfig for k3s
+      #   run: |
+      #     mkdir -p ~/.kube
+      #     sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+      #     sudo chown $USER:$USER ~/.kube/config
+      #     export KUBECONFIG=~/.kube/config
+      #     kubectl get nodes
 
       - name: Deploy to k3s
         run: |
           export KUBECONFIG=~/.kube/config
 
           # 1. Update image tag
-          NEW_IMAGE="${{ secrets.DOCKER_USERNAME }}/xora:xora-v${{ github.run_number }}"
+          NEW_IMAGE="${{ secrets.DOCKER_USERNAME }}/Xora:Xora-v${{ github.run_number }}"
           sed -i "s|image:.*|image: ${NEW_IMAGE}|g" k3s/deployment.yaml
 
           # 2. Apply manifests
           kubectl apply -f k3s/
 
           # 3. Check rollout
-          kubectl rollout status deployment/app-fe-deployment -n xora
+          kubectl rollout status deployment/app-fe-deployment -n xora-app
